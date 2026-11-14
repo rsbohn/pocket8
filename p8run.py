@@ -47,13 +47,31 @@ def console():
                 return chr(port.read(1)[0])
             return None
     else:
-        import supervisor
+        try:
+            import supervisor
+        except ImportError:
+            supervisor = None
+        if supervisor is not None:
+            def get():
+                if supervisor.runtime.serial_bytes_available:
+                    ch = sys.stdin.read(1)
+                    return "\r" if ch == "\n" else ch
+                return None
+        else:
+            # CPython on a desktop: no usb_cdc and no supervisor. Poll
+            # stdin with select and read the raw fd -- select cannot see
+            # into sys.stdin's own buffer, so buffered reads would stall.
+            import os
+            import select
 
-        def get():
-            if supervisor.runtime.serial_bytes_available:
-                ch = sys.stdin.read(1)
+            def get():
+                if not select.select([sys.stdin], [], [], 0)[0]:
+                    return None
+                data = os.read(sys.stdin.fileno(), 1)
+                if not data:
+                    return None
+                ch = data.decode("ascii", "ignore")
                 return "\r" if ch == "\n" else ch
-            return None
     return get
 
 
