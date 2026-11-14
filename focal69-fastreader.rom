@@ -1,0 +1,4 @@
+/ Patch for focal69.rom: give up on an empty high-speed reader after one pass
+/ of the wait loop (about 16,000 instructions) instead of sixteen passes.
+/ 6322 was TAD 0105 (minus sixteen); it becomes CLA CMA (minus one).
+6322: 7240
